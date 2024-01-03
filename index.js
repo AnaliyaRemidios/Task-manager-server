@@ -27,26 +27,6 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-app.post("/tasklist", async (req, res) => {
-  try {
-    const { name, priority, completed } = req.body;
-    console.log(req.body);
-    var status = "false";
-    if (completed) {
-      status = "true";
-    }
-    const query =
-      "INSERT INTO tasks (email,task,priority,status) VALUES ($1, $2, $3,$4)";
-    await db.query(query, ["analiya@gmail.com", name, priority, status]);
-    res
-      .status(200)
-      .json({ message: "Data successfully inserted into PostgreSQL" });
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-});
-
 app.post("/signin", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -77,6 +57,27 @@ app.post("/signin", async (req, res) => {
   }
 });
 
+app.post("/tasklist/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+    const { name, priority, completed } = req.body;
+    console.log(req.body);
+    var status = "false";
+    if (completed) {
+      status = "true";
+    }
+    const query =
+      "INSERT INTO tasks (email,task,priority,status) VALUES ($1, $2, $3,$4)";
+    await db.query(query, [email, name, priority, status]);
+    res
+      .status(200)
+      .json({ message: "Data successfully inserted into PostgreSQL" });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 app.put("/tasklist/:email", async (req, res) => {
   try {
     const { email } = req.params;
@@ -90,6 +91,32 @@ app.put("/tasklist/:email", async (req, res) => {
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+app.get("/tasklist/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+    const query = "SELECT* from  tasks  WHERE email = $1 ";
+    const tasks = await db.query(query, [email]);
+    console.log(tasks);
+    res.status(200).json(tasks);
+  } catch (err) {
+    console.log("error");
+  }
+});
+
+app.delete("/tasklist/:task/:email", async (req, res) => {
+  try {
+    const { task, email } = req.params;
+    console.log(task);
+    const query = "DELETE from tasks WHERE task=$1 AND email=$2";
+    await db.query(query, [task, email]);
+    res
+      .status(200)
+      .json({ message: "Task successfully deleted in PostgreSQL" });
+  } catch (err) {
+    console.log("error");
   }
 });
 
