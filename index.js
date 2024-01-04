@@ -62,7 +62,7 @@ app.post("/tasklist/:email", async (req, res) => {
     const { email } = req.params;
     const { name, priority, completed } = req.body;
     console.log(req.body);
-    var status = "false";
+    var status = false;
     if (completed) {
       status = "true";
     }
