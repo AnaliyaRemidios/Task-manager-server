@@ -81,10 +81,10 @@ app.post("/tasklist/:email", async (req, res) => {
 app.put("/tasklist/:email", async (req, res) => {
   try {
     const { email } = req.params;
-    const { completed, name } = req.body;
+    const { completed, id } = req.body;
     console.log(req.body);
-    const query = "UPDATE tasks SET status = $1 WHERE email = $2 AND task=$3";
-    await db.query(query, [completed, email, name]);
+    const query = "UPDATE tasks SET status = $1 WHERE email = $2 AND id=$3";
+    await db.query(query, [completed, email, id]);
     res
       .status(200)
       .json({ message: "Status successfully updated in PostgreSQL" });
@@ -106,12 +106,11 @@ app.get("/tasklist/:email", async (req, res) => {
   }
 });
 
-app.delete("/tasklist/:task/:email", async (req, res) => {
+app.delete("/tasklist/:email/:id", async (req, res) => {
   try {
-    const { task, email } = req.params;
-    console.log(task);
-    const query = "DELETE from tasks WHERE task=$1 AND email=$2";
-    await db.query(query, [task, email]);
+    const { id, email } = req.params;
+    const query = "DELETE from tasks WHERE id=$1 AND email=$2";
+    await db.query(query, [id, email]);
     res
       .status(200)
       .json({ message: "Task successfully deleted in PostgreSQL" });
@@ -120,30 +119,33 @@ app.delete("/tasklist/:task/:email", async (req, res) => {
   }
 });
 
-// app.get("/", async (req, res) => {
-//   try {
-//     const users = await db.query("SELECT * FROM users");
-//     const usersWithHashedPasswords = users.map((user) => {
-//       const { password, ...userWithoutPassword } = user;
-//       return {
-//         ...userWithoutPassword,
-//         hashedPassword: bcrypt.hashSync(password, saltRounds),
-//       };
-//     });
-
-//     res.json(usersWithHashedPasswords);
-//   } catch (error) {
-//     console.error("Error fetching user data:", error);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// });
-
-//     res.json(users);
-//   } catch (error) {
-//     console.error("Error fetching user data:", error);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// });
+app.get("/tasklist/:email/search", async (req, res) => {
+  try {
+    const { email } = req.params;
+    const { task, priority } = req.query;
+    console.log(task, priority);
+    var tasks;
+    if (priority == "" && task == "") {
+      var query = "SELECT * from tasks WHERE email =$1  ";
+      tasks = await db.query(query, [email]);
+    } else if (priority == "") {
+      var query =
+        "SELECT * from tasks WHERE email =$1 AND UPPER(task)=UPPER($2)";
+      tasks = await db.query(query, [email, task]);
+    } else if (task == "") {
+      var query = "SELECT * from tasks WHERE email =$1 AND priority=$2";
+      tasks = await db.query(query, [email, priority]);
+    } else {
+      var query =
+        "SELECT * from tasks WHERE email =$1 AND UPPER(task)=UPPER($2) AND priority=$3";
+      tasks = await db.query(query, [email, task, priority]);
+    }
+    console.log(tasks);
+    res.status(200).json(tasks);
+  } catch (err) {
+    console.log("error");
+  }
+});
 
 app.listen(5000, () => {
   console.log("App listening on port 5000");
